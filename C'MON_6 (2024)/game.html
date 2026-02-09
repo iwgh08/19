@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="kr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게임</title>
+    <link rel="stylesheet" href="game.css">
+</head>
+<body>
+    <div class="container">
+        <canvas id="game_canvas" width="480" height="320"></canvas>
+        <p id="timerDisplay">타이머: 0</p>
+        <button id="start_button">Start!</button>
+        <button id="next_level">다음 단계</button>
+        <button id="prior_level">이전 단계</button>
+        <p>게임 종료 시간 : 20초</p>
+    </div>
+<script>
+    var canvas = document.getElementById("game_canvas");
+    var ctx = canvas.getContext("2d");
+    var ballRadius = 10;
+    var x = canvas.width / 2;
+    var y = canvas.height - 30;
+    var dx = 4;
+    var dy = -4;
+    var paddleHeight = 10;
+    var paddleWidth = 75;
+    var paddleX = (canvas.width - paddleWidth) / 2;
+    var rightPressed = false;
+    var leftPressed = false;
+    var brickRowCount = 3;
+    var brickColumnCount = 5;
+    var brickWidth = 75;
+    var brickHeight = 20;
+    var brickPadding = 10;
+    var brickOffsetTop = 30;
+    var brickOffsetLeft = 30;
+    var difficulty = 3;
+    var score = 0;
+    var lives = 3;
+    var time = 0; // 타이머 초기화
+    var timerInterval; // 타이머 인터벌을 저장할 변수
+    var next_level = document.getElementById('next_level');
+    var prior_level = document.getElementById('prior_level');
+    var start_button = document.getElementById('start_button');
+
+    // 타이머 시작 함수
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            time++;
+            document.getElementById('timerDisplay').textContent = `타이머: ${time}`;
+            if (time > 20) { // 타이머가 40초가 되면 게임 종료
+                alert("Time Over! Loser!");
+                document.location.reload(); // 페이지 새로고침
+            }
+        }, 1000);
+    }
+
+    // 타이머 초기화 함수
+    function resetTimer() {
+        clearInterval(timerInterval);
+        time = 0;
+        document.getElementById('timerDisplay').textContent = `타이머: ${time}`;
+    }
+
+    // 게임 초기화 함수
+    function resetGame() {
+        x = canvas.width / 2;
+        y = canvas.height - 30;
+        dx = 4;
+        dy = -4;
+        paddleX = (canvas.width - paddleWidth) / 2;
+        lives = 3;
+        score = 0;
+        resetTimer(); // 타이머 초기화
+        
+        // 브릭 설정 초기화
+        bricks = [];
+        for (var c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            for (var r = 0; r < brickRowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+    }
+
+    // 키 이벤트 리스너 설정
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+
+    function keyDownHandler(e) {
+        if (e.key === "ArrowRight") {
+            rightPressed = true;
+        } else if (e.key === "ArrowLeft") {
+            leftPressed = true;
+        }
+    }
+
+    function keyUpHandler(e) {
+        if (e.key === "ArrowRight") {
+            rightPressed = false;
+        } else if (e.key === "ArrowLeft") {
+            leftPressed = false;
+        }
+    }
+
+    function collisionDetection() {
+        for (var c = 0; c < brickColumnCount; c++) {
+            for (var r = 0; r < brickRowCount; r++) {
+                var b = bricks[c][r];
+                if (b.status == 1) {
+                    if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                        dy = -dy;
+                        b.status = 0;
+                        score++;
+                        if (score == brickRowCount * brickColumnCount) {
+                            alert("Winner!");
+                            document.location.reload();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawBricks() {
+        for (var c = 0; c < brickColumnCount; c++) {
+            for (var r = 0; r < brickRowCount; r++) {
+                if (bricks[c][r].status === 1) {
+                    var brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
+                    var brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
+                    bricks[c][r].x = brickX;
+                    bricks[c][r].y = brickY;
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = "gray";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+    }
+
+    function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "black";
+        ctx.fillText('Score: ' + score, 8, 20);
+    }
+
+    function drawLives() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "black";
+        ctx.fillText('Lives: ' + lives, canvas.width - 65, 20);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
+        drawBall();
+        drawPaddle();
+        drawScore();
+        drawLives();
+        collisionDetection();
+
+        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+            dx = -dx;
+        }
+        if (y + dy < ballRadius) {
+            dy = -dy;
+        } else if (y + dy > canvas.height - ballRadius + difficulty) {
+            if (x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+            } else {
+                lives--;
+                if (!lives) {
+                    alert("Loser!");
+                    document.location.reload();
+                } else {
+                    x = canvas.width / 2;
+                    y = canvas.height - 30;
+                    dx = 4;
+                    dy = -4;
+                    paddleX = (canvas.width - paddleWidth) / 2;
+                }
+            }
+        }
+
+        if (rightPressed && paddleX < canvas.width - paddleWidth) {
+            paddleX += 7;
+        } else if (leftPressed && paddleX > 0) {
+            paddleX -= 7;
+        }
+
+        x += dx;
+        y += dy;
+        requestAnimationFrame(draw);
+    }
+
+    start_button.addEventListener('click', () => {
+        resetGame(); // 게임 초기화
+        startTimer(); // 타이머 시작
+        draw(); // 게임 시작
+        start_button.disabled = true;
+        next_level.disabled = false; // 다음 단계 버튼 활성화
+        prior_level.disabled = false; // 이전 단계 버튼 활성화
+    });
+
+    next_level.addEventListener('click', () => {
+        brickColumnCount += 1;
+        brickWidth -= 20;
+        resetGame(); // 게임 초기화
+        startTimer(); // 타이머 시작
+        draw(); // 게임 시작
+    });
+
+    prior_level.addEventListener('click', () => {
+        if (brickColumnCount > 1) { // 최소 1개 이상의 열 유지
+            brickColumnCount -= 1;
+            brickWidth += 20;
+        }
+        resetGame(); // 게임 초기화
+        startTimer(); // 타이머 시작
+        draw(); // 게임 시작
+    });
+
+</script>
+</body>
+</html>
