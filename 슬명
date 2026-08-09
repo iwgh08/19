@@ -2,15 +2,42 @@
 고등학교 3학년 동안 쓰는 repo
 
 깃 사용법
+# 스테이징
 git add .
+
+# 커밋
 git commit -m "커밋 내용"
+
+# 로그 보기
 git log --all --oneline --graph
+
+# 브랜치 만들기
 git branch 브랜치 명
 git switch 바꿀 브랜치
-git branch -d 삭제할 브랜치 명
+
+# 브랜치 삭제 및 이름 변경
+git branch -d 삭제할 브랜치 명  # 병합한 브랜치 삭제
+git branch -D 삭제할 브랜치 명  # 병합 안된 브랜치 삭제
 git branch -m 바꿀 브랜치 명
+
+# 상태 확인
 git status
+
 # 합칠 때 주된 브랜치에서 입력
 git merge 합칠 브랜치 명
-git pull -u 
-git push -u 
+
+# 할칠 때 합쳐지는 브랜치에서 입력
+git rebase 합칠 브랜치 명
+git switch 합치는 주된 브랜치 명
+git merge 새로운 브랜치 명
+
+# "-u" 한번 치면 git push만 해도 ok
+git pull -u repo_주소 main
+git push -u repo_주소 main
+
+# 이거 쓰면 간단하게 가능
+git remote add origin repo_주소
+git push -u origin main
+
+# 이거 치면 변수 목록 나옴
+git remote -v 
